@@ -14,12 +14,14 @@ namespace API
         {
             var host = CreateHostBuilder(args).Build();
             using var scope = host.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
+            // Now that I am using Dapper, I don't need to Migrate the data, 
+            // or to Initialize the Test data, I just use SQL like normal people.
+            //var context = scope.ServiceProvider.GetRequiredService<StoreContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             try
             {
-                context.Database.Migrate();
-                DBInitializer.InitializeTestData(context);
+                //context.Database.Migrate();
+                //DBInitializer.InitializeTestData(context);
             }
             catch( Exception ex )
             {

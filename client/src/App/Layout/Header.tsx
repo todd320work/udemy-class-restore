@@ -1,6 +1,8 @@
 import { ShoppingCart } from "@mui/icons-material";
 import { AppBar, Badge, Box, IconButton, List, ListItem, Switch, Toolbar, Typography } from "@mui/material";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
+
+import { useAppSelector } from "../store/configureStore";
 
 interface Props {
     darkModeChange : () => void,
@@ -19,6 +21,7 @@ const rightLinks = [
 const linksSXProps = 
 {
     color: 'inherit', 
+    textDecoration: 'none',
     typography: 'h6',
     // &: does what?
     // &. does what?? 
@@ -26,8 +29,12 @@ const linksSXProps =
     '&.active': { color: 'text.secondary'},
 }
 
-export default function Header( {darkModeChange, darkMode}: Props){
 
+export default function Header( {darkModeChange, darkMode}: Props){
+    const {basket} = useAppSelector( state => state.basket);
+
+    const basketCount = basket?.items.reduce( (sum, item) => sum + item.quantity, 0 );
+    
     return ( 
         <AppBar position='static' sx={{mb:4}}>
             <Toolbar
@@ -64,8 +71,8 @@ export default function Header( {darkModeChange, darkMode}: Props){
                     </List>
                 </Box>
                 <Box display='flex' alignItems='center'>
-                    <IconButton>
-                        <Badge badgeContent={4} color='secondary'>
+                    <IconButton component={Link} to='/basket' size='large' sx={{ color: 'inherit'}} >
+                        <Badge badgeContent={basketCount} color='secondary'>
                             <ShoppingCart />
                         </Badge>
                     </IconButton>

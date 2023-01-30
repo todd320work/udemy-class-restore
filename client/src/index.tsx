@@ -4,6 +4,10 @@ import {  Router } from 'react-router-dom';
 import App from './App/Layout/App';
 import reportWebVitals from './reportWebVitals';
 import { createBrowserHistory } from "history";
+import { Provider } from 'react-redux';
+import { store } from './App/store/configureStore';
+
+
 
 export const history = createBrowserHistory();
 
@@ -14,9 +18,12 @@ const root = ReactDOM.createRoot(
 // The React.StrictMode needed to be INSIDE the browserRouter, otherwise, the links "work", but you have to click Refresh to 
 // actually see the new page. 
 root.render(
+  // Router needed to go outside of StrictMode...
   <Router history={history}>
     <React.StrictMode>
-        <App />
+        <Provider store={store}>
+          <App />
+        </Provider>
     </React.StrictMode>
   </Router>
 );  

@@ -1,4 +1,6 @@
 using API.Data;
+using API.Interfaces;
+using API.Interfaces.repository;
 using API.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -20,6 +22,7 @@ namespace API
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
+        // Order does NOT matter here, but in the configure() method, it does.
         public void ConfigureServices(IServiceCollection services)
         {
 
@@ -29,10 +32,15 @@ namespace API
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPIv5", Version = "v1" });
             });
             // Add the database context for the Store using SQLite...
-            services.AddDbContext<StoreContext>(opt => 
+            /*services.AddDbContext<StoreContext>(opt => 
             {
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
+            */
+            services.AddSingleton<DapperContext>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IBasketRepository, BasketRepository>();
+
             // Add support for cross origin access
             services.AddCors();
         }
@@ -63,7 +71,8 @@ namespace API
                 // AllowAnyOrigin is required if the request is coming from any other user's PC/etc.
                 // For DEV work, using .WithOrigins("http://todd2015mbp.local:3000") works great, but anything 
                 // off the PC is useless...
-                opt.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();;
+                opt.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000").AllowCredentials();
+                
             });
 
             //app.UseAuthorization();

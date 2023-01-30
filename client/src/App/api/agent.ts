@@ -4,7 +4,11 @@ import { toast } from "react-toastify";
 import { history } from "../..";
 
 // All of the axios calls below will use this as the base URL...
-axios.defaults.baseURL = 'http://todd2015mbp.local:3002/api/'
+// axios.defaults.baseURL = 'http://tamdev1fl619.ad.reyrey.com:3002/api/'
+axios.defaults.baseURL = 'http://localhost:3002/api/'
+
+// This allows for cookies to be passed back and forth
+axios.defaults.withCredentials = true;
 
 // Helper method to allow us to easily extract data
 const responseBody = (response: AxiosResponse) => response.data;
@@ -52,8 +56,14 @@ const requests = {
 }
 
 const Catalog = {
-    list: () => requests.get('products'),
-    details: (id: number) => requests.get('products/'+id.toString())
+    list: () => requests.get('productD'),
+    details: (id: number) => requests.get('productD/'+id.toString())
+}
+
+const Basket = {
+    get: () => requests.get('basket'),
+    addItem: (productId: number, quantity = 1) => requests.post(`basket?productId=${productId}&quantity=${quantity}`, {}),
+    removeItem: (productId: number, quantity = 1) => requests.delete(`basket?productId=${productId}&quantity=${quantity}`),
 }
 
 const TestErrors = {
@@ -67,5 +77,6 @@ const TestErrors = {
 const agent = {
     Catalog, 
     TestErrors,
+    Basket
 }
 export default agent; 

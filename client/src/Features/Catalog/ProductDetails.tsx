@@ -1,32 +1,60 @@
-import { Grid, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material"
+import { LoadingButton } from "@mui/lab";
+import { Grid, Table, TableBody, TableCell, TableContainer, TableRow, TextField, Typography } from "@mui/material"
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import agent from "../../App/api/agent";
+
 import NotFound from "../../App/errors/NotFound";
 import LoadingComponent from "../../App/Layout/LoadingComponent";
-import { Product } from "../../App/Models/Product";
+import { useAppDispatch, useAppSelector } from "../../App/store/configureStore";
+import { removeBasketItemAsync, addBasketItemAsync, StatusType } from "../Baskets/basketSlice";
+import { fetchProductByIdAsync, productSelectors } from "./catalogSlice";
 
 export default function ProductDetails() {
-    debugger;
+    // Gets the parameter from the URL
     const {id} = useParams<{id: string}>();
+    const {status: productStatus}  = useAppSelector( state => state.catalog);
+    // redux state and dispatch mechanism needed
+    const {basket, status} = useAppSelector( state => state.basket);
+    const dispatch = useAppDispatch();
+    const product = useAppSelector(state => productSelectors.selectById(state, id));
+ 
 
-    // This data will be to store the product retrieved from the DB.
-    // for the type of state returned, it's either a PRoduct, OR, 
-    // it hasn't been defined yet, so it's null...
-    const [product, setProduct] = useState<Product | null>(null);
+    // Data used to display the item if it's in the cart
+    const [quantity, setQuantity] = useState(0);
 
-    // This will be a boolean used to determine if the page is loading, or has finished loading.
-    const [loading, setLoading] = useState<boolean>(true);
+    const item = basket?.items.find( obj => obj.product.id === product?.id);
 
     useEffect( () => {
-        agent.Catalog.details(parseInt(id))
-            .then( response => setProduct(response))
-            .catch( error => console.log(error))
-            .finally( () => setLoading(false));
+        if (item) setQuantity(item.quantity);
 
-    }, [id])
+        if( !product) dispatch(fetchProductByIdAsync(parseInt(id)));
 
-    if( loading ) return <LoadingComponent message="Product is currently loading..." />
+    }, [dispatch, product, id, item])
+
+    function handleInputChange(event: any){
+        if (event.target.value >= 0)
+        {
+            setQuantity(parseInt(event?.target.value));
+        }
+    }
+   
+    function handleUpdateCart(){
+        if( !item || quantity > item.quantity )
+        {
+            // if the item does not exist in our basket, just use quantity, otherwise, 
+            // calculate the difference.
+            const updatedQuantity = item ? quantity - item.quantity : quantity;
+            dispatch(addBasketItemAsync({productId: product?.id!, quantity: updatedQuantity}));
+        }
+        else
+        {
+            // Subtraction Case.
+            const updatedQuantity = item.quantity - quantity;
+            dispatch(removeBasketItemAsync({productId: item.product.id, quantity: updatedQuantity}));
+        }
+    }
+
+    if( productStatus.includes('pending') ) return <LoadingComponent message="Product is currently loading..." />
     if( !product ) return <NotFound />
 
     return( 
@@ -37,32 +65,64 @@ export default function ProductDetails() {
             <Grid item xs={6}>
                 <Typography variant='h3'>{product.name}</Typography>
                 <Typography variant='h4'>${(product.price/100.00).toFixed(2).toString()}</Typography>
-                <Table>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell>{product.name}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Description</TableCell>
-                            <TableCell>{product.description}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Type</TableCell>
-                            <TableCell>{product.type}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Brand</TableCell>
-                            <TableCell>{product.brand}</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Quantity In Stock</TableCell>
-                            <TableCell>{product.quantityInStock}</TableCell>
-                        </TableRow>
+                <TableContainer>
+                    <Table>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell>Name</TableCell>
+                                <TableCell>{product.name}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Description</TableCell>
+                                <TableCell>{product.description}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Type</TableCell>
+                                <TableCell>{product.type}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Brand</TableCell>
+                                <TableCell>{product.brand}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Quantity In Stock</TableCell>
+                                <TableCell>{product.quantityInStock}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell>Quantity In Cart</TableCell>
+                                <TableCell>{}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                        <TextField
+                            variant='outlined'
+                            type='number'
+                            label='Quantity in Cart'
+                            fullWidth
+                            value={quantity}
+                            onChange={handleInputChange}
+                            >
 
-                    </TableBody>
-
-                </Table>
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <LoadingButton 
+                            disabled={(item && item.quantity === quantity) || (!item && quantity === 0)}
+                            loading={status.state !== StatusType.Idle && status.productId === item!.productId}
+                            onClick={handleUpdateCart}
+                            sx={{height: '55px'}}
+                            color='primary'
+                            size='large'
+                            variant='contained'
+                            fullWidth
+                        >
+                            {item ? 'Update Quantity' : 'Add to Cart'}
+                        </LoadingButton>
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
     )

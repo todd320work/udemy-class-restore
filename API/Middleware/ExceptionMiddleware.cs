@@ -29,7 +29,7 @@ namespace API.Middleware
             try
             {
                 // just a hack to introduce some wait times...
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(300);
                 await _next(context);
             }
             catch( Exception ex )
