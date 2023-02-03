@@ -20,11 +20,11 @@ const root = ReactDOM.createRoot(
 root.render(
   // Router needed to go outside of StrictMode...
   <Router history={history}>
-    <React.StrictMode>
+   
         <Provider store={store}>
           <App />
         </Provider>
-    </React.StrictMode>
+    
   </Router>
 );  
       

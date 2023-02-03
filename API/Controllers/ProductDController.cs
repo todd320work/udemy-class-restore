@@ -1,7 +1,11 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using API.RequestHelpers;
+using API.Entities;
+using API.Extensions;
 
 namespace API.Controllers
 {
@@ -15,11 +19,16 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetProducts()
+        // Attribute [FromQuery] clues the software into the fact the object will come from query parameters and 
+        // and posted in the body.
+        public async Task<ActionResult<PagedList<Product>>> GetProducts( [FromQuery] ProductParams param )
         {
             try 
             {
-                var products = await _prodRepo.GetProducts();
+                var products = await _prodRepo.GetProducts(param);
+                // Add our pagination information to the response headers...
+                Response.AddPaginationHeader(products.PageData);
+
                 return Ok(products);
             }
             catch( Exception ex)
@@ -42,6 +51,16 @@ namespace API.Controllers
                 return StatusCode(500, ex.Message);
             }
         
+        }
+
+        [HttpGet("filters")]
+        public async Task<IActionResult> GetFilters()
+        {
+            var brands = await _prodRepo.GetBrands();
+            var types = await _prodRepo.GetTypes();
+
+            // Return an anonymous object...
+            return Ok( new { brands, types });
         }
 
     }

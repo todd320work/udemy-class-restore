@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 // When it comes from index, it will just be ../.., or whatever gets us to root.
 import { history } from "../..";
+import { PaginatedResponse } from "../Models/Pagination";
 
 // All of the axios calls below will use this as the base URL...
 // axios.defaults.baseURL = 'http://tamdev1fl619.ad.reyrey.com:3002/api/'
@@ -14,6 +15,14 @@ axios.defaults.withCredentials = true;
 const responseBody = (response: AxiosResponse) => response.data;
 
 axios.interceptors.response.use( response => {
+    const pagination = response.headers['restorepagination'];
+    // If we have our ReStorePagination in the response header, we now know
+    // we have some paged data, so get the pagination data and the dtaa, and return a combined response.
+    if( pagination )
+    {
+        response.data = new PaginatedResponse(response.data, JSON.parse(pagination));
+        return response;
+    }
     return response;
 }, (error: AxiosError) => {
     // forcing error.response to be "any", causes TS to stop 
@@ -48,7 +57,7 @@ axios.interceptors.response.use( response => {
 })
 
 const requests = {
-    get: (url: string) => axios.get(url).then(responseBody),
+    get: (url: string, params?: URLSearchParams) => axios.get(url, {params}).then(responseBody),
     post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
     put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
     delete: (url: string) => axios.delete(url).then(responseBody),
@@ -56,8 +65,9 @@ const requests = {
 }
 
 const Catalog = {
-    list: () => requests.get('productD'),
-    details: (id: number) => requests.get('productD/'+id.toString())
+    list: (params: URLSearchParams) => requests.get('productD', params),
+    details: (id: number) => requests.get('productD/'+id.toString()),
+    fetchFilters: () => requests.get('productD/filters'),
 }
 
 const Basket = {
